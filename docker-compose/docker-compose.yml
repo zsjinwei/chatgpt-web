@@ -2,28 +2,51 @@ version: '3'
 
 services:
   app:
-    image: chenzhaoyu94/chatgpt-web # 总是使用latest,更新时重新pull该tag镜像即可
+    image: chatgpt-web # 总是使用latest,更新时重新pull该tag镜像即可
     ports:
       - 3002:3002
+    depends_on:
+      - database
     environment:
       # 二选一
-      OPENAI_API_KEY: xxxx
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
       # 二选一
-      OPENAI_ACCESS_TOKEN: xxxxxx
+      OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN}
       # API接口地址，可选，设置 OPENAI_API_KEY 时可用
-      OPENAI_API_BASE_URL: xxxx
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL}
       # API模型，可选，设置 OPENAI_API_KEY 时可用
-      OPENAI_API_MODEL: xxxx
+      OPENAI_API_MODEL: ${OPENAI_API_MODEL}
       # 反向代理，可选
-      API_REVERSE_PROXY: xxx
-      # 访问权限密钥，可选
-      AUTH_SECRET_KEY: xxx
+      API_REVERSE_PROXY: ${API_REVERSE_PROXY}
+      # 访问jwt加密参数，可选 不为空则允许登录 同时需要设置 MONGODB_URL
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY}
       # 超时，单位毫秒，可选
-      TIMEOUT_MS: 60000
+      TIMEOUT_MS: ${TIMEOUT_MS}
       # Socks代理，可选，和 SOCKS_PROXY_PORT 一起时生效
-      SOCKS_PROXY_HOST: xxxx
+      SOCKS_PROXY_HOST: ${SOCKS_PROXY_HOST}
       # Socks代理端口，可选，和 SOCKS_PROXY_HOST 一起时生效
-      SOCKS_PROXY_PORT: xxxx
+      SOCKS_PROXY_PORT: ${SOCKS_PROXY_PORT}
+      # mongodb 的连接字符串
+      MONGODB_URL: ${MONGODB_URL}
+      # 网站是否开启注册
+      REGISTER_ENABLED: ${REGISTER_ENABLED}
+      # 开启注册之后 网站注册允许的邮箱后缀 如果空 则允许任意后缀
+      REGISTER_MAILS: ${REGISTER_MAILS}
+      # 开启注册之后 密码加密的盐
+      PASSWORD_MD5_SALT: ${PASSWORD_MD5_SALT}
+      # 开启注册之后 超级管理邮箱
+      ROOT_USER: ${ROOT_USER}
+      # 开启注册之后 网站域名 不含 / 注册的时候发送验证邮箱使用
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      # 开启注册之后 发送验证邮箱配置
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_TSL: ${SMTP_TSL}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    links:
+      - database
+
   nginx:
     image: nginx:alpine
     ports:
@@ -35,3 +58,16 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     links:
       - app
+
+  database:
+    image: mongo
+    ports:
+      - '27017:27017'
+    expose:
+      - '27017'
+    volumes:
+      - ./mongodb/data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}

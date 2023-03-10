@@ -4,6 +4,8 @@ FROM node:lts-alpine AS builder
 COPY ./ /app
 WORKDIR /app
 
+ENV NODE_OPTIONS "--max-old-space-size=4096"
+
 RUN apk add --no-cache git \
     && npm install pnpm -g \
     && pnpm install \
